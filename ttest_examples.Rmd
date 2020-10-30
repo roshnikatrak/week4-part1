@@ -5,6 +5,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
 ```
 
 ## 1. Confidence intervals
@@ -31,5 +32,60 @@ desert_bighorns <- c(32, 44, 18, 26, 50, 33, 42, 20)
 sierra_bighorns <- c(28, 31, 40, 42, 26, 29, 31)
 
 t.test(x=desert_bighorns, y=sierra_bighorns)
+#note: often don't use 95% CI for two-sample t-test
 ```
 
+## END PART 1
+
+## Part 2: Two-sample t-tests
+
+Create subset of data that only contains info for suv and compact classes of cars
+```{r}
+compact_suv <- mpg %>% 
+  filter(class %in% c("compact", "suv"))
+```
+
+### Exploratory data visualization
+
+Exploratory histograms
+```{r}
+ggplot(data=compact_suv, aes(x=cty))+
+  geom_histogram(bins=15)+
+  facet_wrap(~class)
+#suv looks pretty normal, compact may be positively skewed
+```
+
+### Quantile-quantile plot
+
+closer relationship gets to linear, closer sample observations are to being normally distributed
+```{r}
+ggplot(data=compact_suv, aes(sample=cty))+
+  geom_qq()+
+  facet_wrap(~class)
+```
+
+### Descriptive statistics
+
+```{r}
+car_stats <- compact_suv %>% 
+  group_by(class) %>% 
+  summarize(mean_city = mean(cty),
+            sd_city = sd(cty),
+            n = n())
+#even if don't look normal from histograms, central limit theorem and our sample sizes tell us mean distribution will still be normal
+```
+
+### 2-sample t-test
+
+Create vectors containing observations for each sample (city gas mileage)
+```{r}
+compact_sample <- compact_suv %>% 
+  filter(class == "compact") %>% 
+  pull(cty) #turns dataframe into vector, which is what t-test needs
+
+suv_sample <- compact_suv %>% 
+  filter(class == "suv") %>% 
+  pull(cty)
+
+t.test(x=compact_sample, suv_sample)
+```
